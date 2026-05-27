@@ -1,0 +1,33 @@
+[project]
+name = "smart-mcp-solver"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+authors = [
+    { name = "Varun Agnihotri", email = "hello@pythonicvarun.me" }
+]
+dependencies = [
+    "jupyterlab>=4.5.7",
+    "marimo>=0.23.8",
+]
+
+[dependency-groups]
+dev = [
+    "black[jupyter]>=26.5.1",
+    "isort>=8.0.1",
+    "nbqa>=1.9.1",
+    "pre-commit>=4.6.0",
+]
+
+[tool.isort]
+line_length = 88
+profile = "black"
+multi_line_output = 3
+
+[tool.black]
+line-length = 88
+
+[tool.ty.analysis]
+respect-type-ignore-comments = true
