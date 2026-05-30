@@ -5,16 +5,16 @@ from pathlib import Path
 
 import pandas as pd
 
-from local_model import config
-from local_model.inference import export_probs, load_artifacts, predict
-from local_model.train import train
+from local import config
+from local.inference import export_probs, load_artifacts, predict
+from local.train import train
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger("local_model")
+logger = logging.getLogger("local")
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(

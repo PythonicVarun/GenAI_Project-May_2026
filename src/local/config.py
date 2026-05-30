@@ -20,7 +20,7 @@ TEST_CSV = DATASET_DIR / "test.csv"
 if not TEST_CSV.exists():
     raise FileNotFoundError(f"Testing CSV file '{TEST_CSV}' not found.")
 
-OUTPUT_DIR = Path("outputs/local_model")
+OUTPUT_DIR = Path("outputs/local")
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 RETRIEVER_TOP_K = 3

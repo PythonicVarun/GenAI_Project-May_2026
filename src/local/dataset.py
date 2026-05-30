@@ -5,9 +5,9 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from local_model.config import ANSWER_COLS, CTX_FRAC, LABEL2IDX, Q_FRAC
-from local_model.retriever import TFIDFRetriever
-from local_model.vocab import Vocabulary
+from local.config import ANSWER_COLS, CTX_FRAC, LABEL2IDX, Q_FRAC
+from local.retriever import TFIDFRetriever
+from local.vocab import Vocabulary
 
 
 def build_triple(

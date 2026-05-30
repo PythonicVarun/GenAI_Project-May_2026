@@ -8,13 +8,13 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from local_model import config
-from local_model.config import ANSWER_COLS, IDX2LABEL
-from local_model.dataset import MCQDataset, collate_fn
-from local_model.model import BiLSTMScorer
-from local_model.retriever import TFIDFRetriever
-from local_model.utils import map_at_3, set_seed
-from local_model.vocab import Vocabulary
+from local import config
+from local.config import ANSWER_COLS, IDX2LABEL
+from local.dataset import MCQDataset, collate_fn
+from local.model import BiLSTMScorer
+from local.retriever import TFIDFRetriever
+from local.utils import map_at_3, set_seed
+from local.vocab import Vocabulary
 
 
 def make_scheduler(opt, warmup_steps, total_steps):

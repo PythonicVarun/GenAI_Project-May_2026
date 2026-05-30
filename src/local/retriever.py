@@ -7,8 +7,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 
-from local_model.config import ANSWER_COLS
-from local_model.utils import clean
+from local.config import ANSWER_COLS
+from local.utils import clean
 
 logger = logging.getLogger(__name__)
 

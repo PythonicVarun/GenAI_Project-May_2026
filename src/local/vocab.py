@@ -2,7 +2,7 @@ import logging
 import pickle
 from typing import Dict, List
 
-from local_model.utils import clean
+from local.utils import clean
 
 logger = logging.getLogger(__name__)
 
