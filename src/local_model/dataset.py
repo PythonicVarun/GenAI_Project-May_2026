@@ -53,9 +53,9 @@ class MCQDataset(Dataset):
 
             triples, lengths = [], []
             for col in ANSWER_COLS:
-                ids, l = build_triple(q, ctx, str(row[col]), vocab, max_len)
+                ids, n = build_triple(q, ctx, str(row[col]), vocab, max_len)
                 triples.append(ids)
-                lengths.append(l)
+                lengths.append(n)
 
             self.records.append(
                 {

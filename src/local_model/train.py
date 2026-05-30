@@ -58,10 +58,11 @@ def evaluate(model, loader, device):
         loss = F.cross_entropy(logits, lbl)
         total_loss += loss.item()
         probs = F.softmax(logits, dim=-1).cpu().numpy()
-        for p_row, l in zip(probs, lbl.cpu().tolist()):
+        for p_row, l in zip(probs, lbl.cpu().tolist()):  # noqa: E741 - l is label index
             ranked = [IDX2LABEL[i] for i in p_row.argsort()[::-1]]
             all_preds.append(ranked[:3])
             all_labels.append(IDX2LABEL[l])
+
         pbar.set_postfix(loss=loss.item())
 
     return total_loss / len(loader), map_at_3(all_preds, all_labels)
@@ -152,7 +153,7 @@ def train():
         is_best = va_map3 > best_map3
         star = " (Best :)" if is_best else ""
         logger.info(
-            "Epoch %d/%d completed | Train Loss: %.4f | Val Loss: %.4f | Val MAP@3: %.4f%s",
+            "Epoch %d/%d completed | Train Loss: %.4f | Val Loss: %.4f | Val MAP@3: %.4f%s",  # noqa: E501
             ep,
             config.EPOCHS,
             tr_loss,
