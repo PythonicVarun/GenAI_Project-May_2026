@@ -7,10 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  pyrefly-check:
+  check:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: 🛎️ Checkout
