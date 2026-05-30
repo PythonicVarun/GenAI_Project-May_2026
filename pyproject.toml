@@ -27,23 +27,28 @@ torch = { index = "pytorch-cu132" }
 
 [dependency-groups]
 dev = [
-    "black[jupyter]>=26.5.1",
-    "isort>=8.0.1",
     "kaggle>=2.2.0",
-    "nbqa>=1.9.1",
     "pre-commit>=4.6.0",
     "pyrefly>=1.0.0",
+    "ruff>=0.15.15",
     "types-tqdm>=4.67.3.20260518",
 ]
 
-[tool.isort]
-line_length = 88
-profile = "black"
-multi_line_output = 3
-
-[tool.black]
+[tool.ruff]
+target-version = "py312"
 line-length = 88
-target-version = ["py312"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.lint.isort]
+force-wrap-aliases = true
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
 
 [tool.pyrefly]
 project-includes = [
