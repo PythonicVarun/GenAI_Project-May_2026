@@ -1,5 +1,5 @@
 [project]
-name = "smart-mcp-solver"
+name = "smart-mcq-solver"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -32,6 +32,8 @@ dev = [
     "kaggle>=2.2.0",
     "nbqa>=1.9.1",
     "pre-commit>=4.6.0",
+    "pyrefly>=1.0.0",
+    "types-tqdm>=4.67.3.20260518",
 ]
 
 [tool.isort]
@@ -41,6 +43,10 @@ multi_line_output = 3
 
 [tool.black]
 line-length = 88
+target-version = ["py312"]
 
-[tool.ty.analysis]
-respect-type-ignore-comments = true
+[tool.pyrefly]
+project-includes = [
+    "**/*.py*",
+    "**/*.ipynb",
+]
