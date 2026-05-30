@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  pyrefly-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: ⚡ Install uv
+        uses: astral-sh/setup-uv@v8
+
+      - name: 🌳 Sync dependencies
+        run: uv sync
+
+      - name: 🙃 Run Ruff Check
+        run: uvx ruff check --output-format=github .
+
+      - name: 🔍 Run Pyrefly Check
+        run: uvx pyrefly check --output-format=github
