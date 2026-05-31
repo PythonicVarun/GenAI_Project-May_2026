@@ -12,3 +12,6 @@ wheels/
 # Environment variables
 .env*
 !.env.example
+
+# Weights & Biases logs
+wandb/
