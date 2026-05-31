@@ -26,10 +26,11 @@ explicit = true
 
 [tool.uv.sources]
 torch = { index = "pytorch-cu132" }
+kaggle = { git = "https://github.com/PythonicVarun/kaggle-cli.git", rev = "fix/obj-print" }
 
 [dependency-groups]
 dev = [
-    "kaggle>=2.2.0",
+    "kaggle",
     "pre-commit>=4.6.0",
     "pyrefly>=1.0.0",
     "ruff>=0.15.15",
