@@ -9,7 +9,13 @@ IDX2LABEL = {i: c for c, i in LABEL2IDX.items()}
 
 Q_FRAC, CTX_FRAC, C_FRAC = 0.40, 0.40, 0.20
 
-DATASET_DIR = Path("dataset")
+IS_KAGGLE = "KAGGLE_KERNEL_RUN_TYPE" in os.environ
+
+if IS_KAGGLE:
+    DATASET_DIR = Path("/kaggle/input/competitions/smart-mcq-solver-challenge")
+else:
+    DATASET_DIR = Path("dataset")
+
 if not DATASET_DIR.exists():
     raise FileNotFoundError(f"Dataset directory '{DATASET_DIR}' not found.")
 
