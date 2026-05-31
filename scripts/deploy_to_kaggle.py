@@ -99,13 +99,8 @@ def main():
 
     src_dir = project_root / "src"
     if src_dir.exists():
-        shutil.copytree(
-            src_dir,
-            model_build / "src",
-            ignore=shutil.ignore_patterns(
-                "__pycache__", "*.pyc", "*.egg-info", ".ipynb_checkpoints"
-            ),
-        )
+        print("Zipping source code to src.zip...")
+        shutil.make_archive(str(model_build / "src"), "zip", src_dir)
 
     # Kaggle Model Creation and Versioning
     model_slug = "smart-mcq-solver"
