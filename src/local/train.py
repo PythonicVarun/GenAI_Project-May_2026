@@ -12,6 +12,7 @@ from tqdm import tqdm
 from local import config
 from local.config import ANSWER_COLS, IDX2LABEL
 from local.dataset import MCQDataset, collate_fn
+from local.git_utils import check_git_status_and_confirm, get_git_commit_url
 from local.model import BiLSTMScorer
 from local.retriever import TFIDFRetriever
 from local.utils import map_at_3, set_seed
@@ -73,6 +74,9 @@ logger = logging.getLogger(__name__)
 
 
 def train():
+    if not check_git_status_and_confirm():
+        raise RuntimeError("Aborted run due to uncommitted files in repository.")
+
     set_seed(config.SEED)
     os.makedirs(config.OUTPUT_DIR, exist_ok=True)
     device = config.DEVICE
@@ -99,9 +103,14 @@ def train():
         "retriever_max_words": config.RETRIEVER_MAX_WORDS,
     }
 
+    commit_url = get_git_commit_url()
+    if commit_url:
+        wandb_config["git_commit_url"] = commit_url
+
     wandb.init(
         project=os.getenv("WANDB_PROJECT", "24f2004142-t22026"),
         config=wandb_config,
+        notes=f"Git commit: {commit_url}" if commit_url else "No git info available",
     )
 
     try:
