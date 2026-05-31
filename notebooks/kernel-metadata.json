@@ -1,0 +1,21 @@
+{
+  "id": "pythonicvarun/dl-24f2004142-notebook-t22026",
+  "id_no": 120655501,
+  "title": "DL-24f2004142-notebook-t22026",
+  "code_file": "dl-24f2004142-notebook-t22026.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [
+    "smart-mcq-solver-challenge"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:00377cd1b3d470a605bc5b0ceca79969e369644e9b36802242a1c70e627372f9",
+  "machine_shape": "NvidiaTeslaT4"
+}
