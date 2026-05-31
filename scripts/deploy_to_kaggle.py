@@ -20,7 +20,7 @@ def run_cmd(cmd, check=True):
 
 def get_latest_version(username, model_slug, instance_slug):
     """Fetch the latest version number for a model variation."""
-    model_instance = f"{username}/{model_slug}/pyTorch/{instance_slug}"
+    model_instance = f"{username}/{model_slug}/pytorch/{instance_slug}"
     print(f"Fetching version list for {model_instance}...")
     res = run_cmd(
         f"kaggle models instances versions list -v {model_instance}", check=True
@@ -145,7 +145,7 @@ def main():
         f"Checking if variation {instance_slug} exists under {username}/{model_slug}..."
     )
     check_instance = run_cmd(
-        f"kaggle models instances get {username}/{model_slug}/pyTorch/{instance_slug}",
+        f"kaggle models instances get {username}/{model_slug}/pytorch/{instance_slug}",
         check=False,
     )
 
@@ -185,8 +185,8 @@ def main():
     else:
         kernel_metadata["id"] = f"{username}/{orig_id}"
 
-    # Add model source: pythonicvarun/smart-mcq-solver/pyTorch/local/1
-    model_source = f"{username}/{model_slug}/pyTorch/{instance_slug}/{version_number}"
+    # Add model source: pythonicvarun/smart-mcq-solver/pytorch/local/1
+    model_source = f"{username}/{model_slug}/pytorch/{instance_slug}/{version_number}"
     if "model_sources" not in kernel_metadata:
         kernel_metadata["model_sources"] = []
 
