@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from local.config import ANSWER_COLS, CTX_FRAC, LABEL2IDX, Q_FRAC
+from local.config import ANSWER_COLS, LABEL2IDX, Q_FRAC
 from local.retriever import TFIDFRetriever
 from local.vocab import Vocabulary
 
@@ -17,13 +17,23 @@ def build_triple(
     vocab: Vocabulary,
     max_len: int,
 ) -> Tuple[List[int], int]:
-    q_max = max(1, int(max_len * Q_FRAC))
-    ctx_max = max(1, int(max_len * CTX_FRAC))
-    c_max = max(1, max_len - q_max - ctx_max - 2)
+    # Encode question and choice first without hard constraints to keep them full
+    q_ids = vocab.encode(question, max_len)
+    c_ids = vocab.encode(choice, max_len)
 
-    q_ids = vocab.encode(question, q_max)
-    ctx_ids = vocab.encode(context, ctx_max)
-    c_ids = vocab.encode(choice, c_max)
+    reserved_space = len(q_ids) + len(c_ids) + 2
+    if reserved_space < max_len:
+        # Give all remaining space to the context
+        ctx_limit = max_len - reserved_space
+        ctx_ids = vocab.encode(context, ctx_limit)
+    else:
+        # Fallback: Question + Option exceed max_len.
+        # Drop context completely and truncate using Q_FRAC
+        ctx_ids = []
+        q_limit = max(1, int(max_len * Q_FRAC))
+        c_limit = max(1, max_len - q_limit - 2)
+        q_ids = vocab.encode(question, q_limit)
+        c_ids = vocab.encode(choice, c_limit)
 
     ids = q_ids + [vocab.sep_idx] + ctx_ids + [vocab.sep_idx] + c_ids
     ids = ids[:max_len]
