@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import shutil
@@ -15,6 +16,33 @@ def run_cmd(cmd, check=True):
         print(f"Stderr: {res.stderr}")
         raise RuntimeError(f"Command failed: {cmd}")
     return res
+
+
+def get_latest_version(username, model_slug, instance_slug):
+    """Fetch the latest version number for a model variation."""
+    model_instance = f"{username}/{model_slug}/pyTorch/{instance_slug}"
+    print(f"Fetching version list for {model_instance}...")
+    res = run_cmd(
+        f"kaggle models instances versions list -v {model_instance}", check=True
+    )
+    lines = res.stdout.strip().split("\n")
+    if len(lines) <= 1:
+        return 1
+
+    reader = csv.reader(lines)
+    next(reader)
+    versions = []
+    for row in reader:
+        if row:
+            try:
+                versions.append(int(row[0]))
+            except ValueError:
+                pass
+
+    if versions:
+        return max(versions)
+
+    return 1
 
 
 def main():
@@ -133,6 +161,10 @@ def main():
         print(f"Variation {instance_slug} exists. Creating a new version...")
         run_cmd(f"kaggle models instances versions create -p {model_build}")
 
+    # Fetch the version number that was created/registered
+    version_number = get_latest_version(username, model_slug, instance_slug)
+    print(f"Latest model version determined: {version_number}")
+
     # Load and adapt kernel-metadata.json
     orig_metadata_file = project_root / "notebooks" / "kernel-metadata.json"
     if not orig_metadata_file.exists():
@@ -158,8 +190,8 @@ def main():
     else:
         kernel_metadata["id"] = f"{username}/{orig_id}"
 
-    # Add model source: pythonicvarun/smart-mcq-solver/pyTorch/local
-    model_source = f"{username}/{model_slug}/pyTorch/{instance_slug}"
+    # Add model source: pythonicvarun/smart-mcq-solver/pyTorch/local/1
+    model_source = f"{username}/{model_slug}/pyTorch/{instance_slug}/{version_number}"
     if "model_sources" not in kernel_metadata:
         kernel_metadata["model_sources"] = []
 
