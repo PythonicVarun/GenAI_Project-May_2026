@@ -27,3 +27,36 @@ def map_at_3(preds: List[List[str]], labels: List[str]) -> float:
                 break
 
     return score / max(1, len(labels))
+
+
+def extract_core_question(prompt: str) -> str:
+    """Extract core question by removing template prefixes and suffixes."""
+    prefixes = [
+        "Pick the best possible answer:",
+        "Determine the correct option:",
+        "Select the most accurate option:",
+        "Identify the correct statement:",
+        "Which of the following is correct?",
+        "Choose the correct answer:",
+        "Choose the correct option:",
+        "Select the correct statement:",
+    ]
+
+    suffixes = [
+        "among the listed options.",
+        "carefully.",
+        "based on the given context.",
+        "from the following choices.",
+    ]
+
+    p = prompt.strip()
+    for prefix in prefixes:
+        if p.startswith(prefix):
+            p = p[len(prefix) :].strip()
+            break
+
+    for suffix in suffixes:
+        if p.endswith(suffix):
+            p = p[: -len(suffix)].strip()
+            break
+    return p

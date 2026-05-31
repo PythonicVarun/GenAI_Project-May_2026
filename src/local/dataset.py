@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from local.config import ANSWER_COLS, LABEL2IDX, Q_FRAC
 from local.retriever import TFIDFRetriever
+from local.utils import extract_core_question
 from local.vocab import Vocabulary
 
 
@@ -58,7 +59,15 @@ class MCQDataset(Dataset):
         for pos, (_, row) in enumerate(tqdm(df.iterrows(), total=len(df), desc=desc)):
             q = str(row["prompt"])
             ex_idx = pos if is_train else None
-            ctx = retriever.retrieve(q, exclude_idx=ex_idx)
+            ex_prompt = q if is_train else None
+            ex_core = extract_core_question(q) if is_train else None
+
+            ctx = retriever.retrieve(
+                q,
+                exclude_idx=ex_idx,
+                exclude_prompt=ex_prompt,
+                exclude_core_question=ex_core,
+            )
             label = LABEL2IDX.get(str(row.get("answer", "A")), 0)
 
             triples, lengths = [], []

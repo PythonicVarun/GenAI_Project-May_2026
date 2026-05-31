@@ -1,6 +1,7 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -15,7 +16,7 @@ from local.dataset import MCQDataset, collate_fn
 from local.git_utils import check_git_status_and_confirm, get_git_commit_url
 from local.model import BiLSTMScorer
 from local.retriever import TFIDFRetriever
-from local.utils import map_at_3, set_seed
+from local.utils import extract_core_question, map_at_3, set_seed
 from local.vocab import Vocabulary
 
 
@@ -129,10 +130,17 @@ def train():
         vocab.save(os.path.join(config.OUTPUT_DIR, "vocab.pkl"))
 
         # Split the dataset before fitting the training retriever to avoid data leakage
-        df_shuffled = df.sample(frac=1, random_state=config.SEED).reset_index(drop=True)
-        n_val = max(1, int(len(df_shuffled) * config.VAL_FRAC))
-        df_val = df_shuffled.iloc[:n_val].reset_index(drop=True)
-        df_train = df_shuffled.iloc[n_val:].reset_index(drop=True)
+        df["core_question"] = df["prompt"].apply(extract_core_question)
+        unique_cores = df["core_question"].unique()
+
+        rng = np.random.default_rng(config.SEED)
+        rng.shuffle(unique_cores)
+
+        n_val_cores = max(1, int(len(unique_cores) * config.VAL_FRAC))
+        val_cores = set(unique_cores[:n_val_cores])
+
+        df_val = df[df["core_question"].isin(val_cores)].reset_index(drop=True)
+        df_train = df[~df["core_question"].isin(val_cores)].reset_index(drop=True)
         logger.info(
             "Data Split: train=%d samples, validation=%d samples",
             len(df_train),

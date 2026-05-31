@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 
-from local.utils import clean
+from local.utils import clean, extract_core_question
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,8 @@ class TFIDFRetriever:
             strip_accents="unicode",
             token_pattern=r"(?u)\b\w\w+\b",
         )
+        self.corpus_prompts: List[str] = []
+        self.corpus_core_questions: List[str] = []
         self.corpus_texts: List[str] = []
         self.corpus_matrix = None  # (N, vocab)
 
@@ -41,6 +43,8 @@ class TFIDFRetriever:
         if isinstance(df, pd.Series):
             df = df.to_frame()
 
+        self.corpus_prompts = df["prompt"].tolist()
+        self.corpus_core_questions = df["prompt"].apply(extract_core_question).tolist()
         self.corpus_texts = [
             clean(build_row_text(r))
             for _, r in tqdm(df.iterrows(), total=len(df), desc="Fitting Retriever")
@@ -56,6 +60,8 @@ class TFIDFRetriever:
         self,
         query: str,
         exclude_idx: Optional[int] = None,
+        exclude_prompt: Optional[str] = None,
+        exclude_core_question: Optional[str] = None,
         top_k: Optional[int] = None,
     ) -> str:
         """Return retrieved context as a single string."""
@@ -69,6 +75,20 @@ class TFIDFRetriever:
                 break
 
             if exclude_idx is not None and idx == exclude_idx:
+                continue
+
+            if (
+                exclude_prompt is not None
+                and idx < len(self.corpus_prompts)
+                and self.corpus_prompts[idx] == exclude_prompt
+            ):
+                continue
+
+            if (
+                exclude_core_question is not None
+                and idx < len(self.corpus_core_questions)
+                and self.corpus_core_questions[idx] == exclude_core_question
+            ):
                 continue
 
             picked.append(idx)
