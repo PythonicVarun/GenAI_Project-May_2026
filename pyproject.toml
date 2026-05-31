@@ -46,6 +46,7 @@ select = ["E", "F", "I"]
 [tool.ruff.lint.isort]
 force-wrap-aliases = true
 combine-as-imports = true
+known-third-party = ["wandb"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -5,10 +5,10 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import wandb
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-import wandb
 from local import config
 from local.config import ANSWER_COLS, IDX2LABEL
 from local.dataset import MCQDataset, collate_fn
