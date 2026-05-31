@@ -10,7 +10,6 @@ on:
       - 'outputs/local/retriever.pkl'
       - 'notebooks/dl-24f2004142-notebook-t22026.ipynb'
       - 'notebooks/kernel-metadata.json'
-      - 'scripts/deploy_to_kaggle.py'
   workflow_dispatch:
 
 jobs:

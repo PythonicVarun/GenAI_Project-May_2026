@@ -174,7 +174,7 @@ def main():
 
     registered_version = 0
     start_register_time = time.time()
-    while time.time() - start_register_time < 60:
+    while time.time() - start_register_time < 5 * 60:  # Wait up to 5 mins
         try:
             current_version = get_latest_version(username, model_slug, instance_slug)
             if current_version >= target_version:
