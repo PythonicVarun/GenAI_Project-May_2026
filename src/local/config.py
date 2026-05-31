@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import torch
@@ -43,3 +44,6 @@ WARMUP_RATIO = 0.1
 VAL_FRAC = 0.15
 SEED = 42
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+WANDB_ENTITY = os.getenv("WANDB_ENTITY", "varunagnihotri")
+WANDB_PROJECT = os.getenv("WANDB_PROJECT", "24f2004142-t22026")

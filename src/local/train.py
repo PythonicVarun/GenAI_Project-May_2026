@@ -108,7 +108,8 @@ def train():
         wandb_config["git_commit_url"] = commit_url
 
     wandb.init(
-        project=os.getenv("WANDB_PROJECT", "24f2004142-t22026"),
+        entity=config.WANDB_ENTITY,
+        project=config.WANDB_PROJECT,
         config=wandb_config,
         notes=f"Git commit: {commit_url}" if commit_url else "No git info available",
     )
