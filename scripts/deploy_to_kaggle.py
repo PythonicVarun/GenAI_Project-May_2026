@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import subprocess
+import time
 from pathlib import Path
 
 
@@ -140,6 +141,13 @@ def main():
     with open(model_build / "model-instance-metadata.json", "w") as f:
         json.dump(model_instance_metadata, f, indent=2)
 
+    try:
+        old_version = get_latest_version(username, model_slug, instance_slug)
+    except Exception:
+        old_version = 0
+
+    print(f"Current version before deployment: {old_version}")
+
     # Check if the variation exists
     print(
         f"Checking if variation {instance_slug} exists under {username}/{model_slug}..."
@@ -152,15 +160,40 @@ def main():
     if check_instance.returncode != 0:
         print(f"Variation {instance_slug} does not exist. Creating variation...")
         run_cmd(f"kaggle models instances create -p {model_build}")
+        target_version = 1
     else:
         print(f"Variation {instance_slug} exists. Creating a new version...")
         run_cmd(
             f"kaggle models instances versions create -p {model_build} "
             f"{username}/{model_slug}/pytorch/{instance_slug}"
         )
+        target_version = old_version + 1
 
-    # Fetch the version number that was created/registered
-    version_number = get_latest_version(username, model_slug, instance_slug)
+    # Wait for the new version number to register on Kaggle
+    print(f"Waiting for Kaggle to register version {target_version} in the registry...")
+
+    registered_version = 0
+    start_register_time = time.time()
+    while time.time() - start_register_time < 60:
+        try:
+            current_version = get_latest_version(username, model_slug, instance_slug)
+            if current_version >= target_version:
+                registered_version = current_version
+                print(f"Version {target_version} has been registered in the Kaggle.")
+                break
+        except Exception:
+            pass
+
+        time.sleep(5)
+
+    if not registered_version:
+        print(
+            f"Warning: Version {target_version} did not appear in version list."
+            "Forcing target_version."
+        )
+        registered_version = target_version
+
+    version_number = registered_version
     print(f"Latest model version determined: {version_number}")
 
     # Load and adapt kernel-metadata.json
