@@ -7,16 +7,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 
-from local.config import ANSWER_COLS
 from local.utils import clean
 
 logger = logging.getLogger(__name__)
 
 
 def build_row_text(row: pd.Series) -> str:
-    """Concatenate prompt + all 5 choices into one searchable string."""
-    parts = [str(row["prompt"])] + [str(row[c]) for c in ANSWER_COLS]
-    return " ".join(parts)
+    """Concatenate prompt + correct choice in 'Question: ... Answer: ...' format."""
+    ans_col = str(row["answer"])
+    return f"Question: {row['prompt']} Answer: {row[ans_col]}"
 
 
 class TFIDFRetriever:
