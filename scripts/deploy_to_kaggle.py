@@ -134,7 +134,7 @@ def main():
         "ownerSlug": username,
         "modelSlug": model_slug,
         "instanceSlug": instance_slug,
-        "framework": "pyTorch",
+        "framework": "pytorch",
         "licenseName": "MIT",
     }
     with open(model_build / "model-instance-metadata.json", "w") as f:
@@ -154,7 +154,10 @@ def main():
         run_cmd(f"kaggle models instances create -p {model_build}")
     else:
         print(f"Variation {instance_slug} exists. Creating a new version...")
-        run_cmd(f"kaggle models instances versions create -p {model_build}")
+        run_cmd(
+            f"kaggle models instances versions create -p {model_build} "
+            f"{username}/{model_slug}/pytorch/{instance_slug}"
+        )
 
     # Fetch the version number that was created/registered
     version_number = get_latest_version(username, model_slug, instance_slug)
