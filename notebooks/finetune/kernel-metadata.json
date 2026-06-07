@@ -1,0 +1,23 @@
+{
+  "id": "pythonicvarun/gemma4-finetune",
+  "id_no": 121912262,
+  "title": "gemma4-finetune",
+  "code_file": "gemma4-finetune.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [
+    "smart-mcq-solver-challenge"
+  ],
+  "model_sources": [
+    "google/gemma-4/Transformers/gemma-4-e4b-it/1"
+  ],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:57e612b484cf3df5026ee4dcc3cb176974b22b2bc0937fb1e16132a8be4cb13c",
+  "machine_shape": "NvidiaTeslaT4"
+}
