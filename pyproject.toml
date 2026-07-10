@@ -49,6 +49,9 @@ line-length = 88
 [tool.ruff.lint]
 select = ["E", "F", "I"]
 
+[tool.ruff.lint.per-file-ignores]
+"notebooks/milestone-3.ipynb" = ["E741"] # E741: ambiguous variable name 'I' in notebooks/milestone-3.ipynb
+
 [tool.ruff.lint.isort]
 force-wrap-aliases = true
 combine-as-imports = true
