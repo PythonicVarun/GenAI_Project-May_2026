@@ -42,6 +42,7 @@ Developed inside [notebooks/finetune/gemma4-finetune.ipynb](notebooks/finetune/g
 │   ├── milestone-1.ipynb                     # Milestone - 1
 │   ├── milestone-2.ipynb                     # Milestone - 2
 │   ├── milestone-3.ipynb                     # Milestone - 3
+│   ├── milestone-4.ipynb                     # Milestone - 4
 │   ├── kernel-metadata.json                  # Kaggle metadata configuration
 │   ├── dl-24f2004142-notebook-t22026.ipynb   # Main inference and blending stacker notebook
 │   └── finetune/
