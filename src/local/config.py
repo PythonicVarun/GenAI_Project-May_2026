@@ -54,7 +54,7 @@ VAL_FRAC = 0.15
 # "random" -> row-level split; val rows keep siblings in the retrieval corpus,
 #             mirroring the test set (98% of test rows share a core question
 #             with train).
-VAL_STRATEGY = "group"
+VAL_STRATEGY = "random"
 
 SEED = 42
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

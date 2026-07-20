@@ -92,19 +92,19 @@ Use the entrypoint module [src/local/__main__.py](src/local/__main__.py) to exec
 ### Train Local Model
 Trains [BiLSTMScorer](src/local/model.py#L24-L71), saves checkpoints and retriever states in `outputs/local/`, and runs logging to Weights & Biases:
 ```bash
-uv run python -m src.local --mode train
+uv run python -m local --mode train
 ```
 
 ### Predict Local Model
 Executes local test-set inference and exports predicted CSV outputs:
 ```bash
-uv run python -m src.local --mode predict
+uv run python -m local --mode predict
 ```
 
 ### Export Probabilities
 Dumps prediction probability numpy arrays (used for stacking/ensembling):
 ```bash
-uv run python -m src.local --mode export_probs
+uv run python -m local --mode export_probs
 ```
 
 ### Auto-Deploy to Kaggle
