@@ -102,6 +102,7 @@ def train():
         "device": str(config.DEVICE),
         "retriever_top_k": config.RETRIEVER_TOP_K,
         "retriever_max_words": config.RETRIEVER_MAX_WORDS,
+        "val_strategy": config.VAL_STRATEGY,
     }
 
     commit_url = get_git_commit_url()
@@ -131,18 +132,27 @@ def train():
 
         # Split the dataset before fitting the training retriever to avoid data leakage
         df["core_question"] = df["prompt"].apply(extract_core_question)
-        unique_cores = df["core_question"].unique()
-
         rng = np.random.default_rng(config.SEED)
-        rng.shuffle(unique_cores)
 
-        n_val_cores = max(1, int(len(unique_cores) * config.VAL_FRAC))
-        val_cores = set(unique_cores[:n_val_cores])
+        if config.VAL_STRATEGY == "group":
+            unique_cores = np.asarray(df["core_question"].unique(), dtype=object)
+            rng.shuffle(unique_cores)
 
-        df_val = df[df["core_question"].isin(val_cores)].reset_index(drop=True)
-        df_train = df[~df["core_question"].isin(val_cores)].reset_index(drop=True)
+            n_val_cores = max(1, int(len(unique_cores) * config.VAL_FRAC))
+            val_cores = set(unique_cores[:n_val_cores])
+
+            val_mask = df["core_question"].isin(val_cores).to_numpy()
+        else:
+            order = rng.permutation(len(df))
+            n_val = max(1, int(len(df) * config.VAL_FRAC))
+            val_mask = np.zeros(len(df), dtype=bool)
+            val_mask[order[:n_val]] = True
+
+        df_val = df[val_mask].reset_index(drop=True)
+        df_train = df[~val_mask].reset_index(drop=True)
         logger.info(
-            "Data Split: train=%d samples, validation=%d samples",
+            "Data Split (%s): train=%d samples, validation=%d samples",
+            config.VAL_STRATEGY,
             len(df_train),
             len(df_val),
         )

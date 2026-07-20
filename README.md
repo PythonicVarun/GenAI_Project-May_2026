@@ -12,10 +12,10 @@ The project integrates two major modeling approaches to achieve high-performance
 
 ### 1. Custom Local Model (Model 1)
 Built from scratch in PyTorch under the [src/local/](src/local/) directory.
-- **RAG Preprocessing:** A [TFIDFRetriever](src/local/retriever.py#L21-L107) indexes training queries and correct answers, retrieving the top $K$ relevant context strings.
+- **RAG Preprocessing:** A [TFIDFRetriever](src/local/retriever.py#L21-L107) indexes training queries and correct answers, retrieving the top $K$ relevant context strings. Only self-retrieval is excluded at training time, so rows can retrieve sibling questions as test rows do.
 - **Tokenization:** A custom [Vocabulary](src/local/vocab.py#L10-L58) is built from corpus frequencies to convert text to indices.
 - **Network Pipeline:** [BiLSTMScorer](src/local/model.py#L24-L71) passes prompt-context-choice sequence embeddings through a bidirectional LSTM, scores outputs via [SelfAttention](src/local/model.py#L7-L21), and computes a logit score. The model optimizes cross-entropy loss over choice classifications.
-- **Validation:** Utilizes a group-split validation based on core questions (via [extract_core_question](src/local/utils.py#L32-L41)) to prevent semantic leakage.
+- **Validation:** `VAL_STRATEGY` selects between a `group` split on core questions (via [extract_core_question](src/local/utils.py#L32-L41)), which measures generalization to unseen questions, and a `random` row-level split, which mirrors the test distribution.
 
 ### 2. Fine-tuned LLM Model (Model 2)
 Developed inside [notebooks/finetune/gemma4-finetune.ipynb](notebooks/finetune/gemma4-finetune.ipynb).
