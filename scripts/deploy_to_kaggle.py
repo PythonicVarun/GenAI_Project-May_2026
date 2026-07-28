@@ -21,7 +21,7 @@ def run_cmd(cmd, check=True):
 
 def get_latest_version(username, model_slug, instance_slug, framework):
     """Fetch the latest version number for a model variation."""
-    model_instance = f"{username}/{model_slug}/{framework.lower()}/{instance_slug}"
+    model_instance = f"{username}/{model_slug}/{framework}/{instance_slug}"
     print(f"Fetching version list for {model_instance}...")
     res = run_cmd(
         f"kaggle models instances versions list -v {model_instance}", check=True
@@ -110,7 +110,7 @@ def deploy_instance(username, model_slug, instance_slug, framework, model_build)
     print(f"Current version before deployment: {old_version}")
 
     # Check if the variation exists
-    instance_path = f"{username}/{model_slug}/{framework.lower()}/{instance_slug}"
+    instance_path = f"{username}/{model_slug}/{framework}/{instance_slug}"
     print(
         f"Checking if variation {instance_slug} exists under {username}/{model_slug}..."
     )
@@ -199,7 +199,7 @@ def main():
     variations = [
         (
             "local",
-            "pytorch",
+            "PyTorch",
             [
                 "outputs/local/local_model_best.pt",
                 "outputs/local/vocab.pkl",
@@ -208,7 +208,7 @@ def main():
         ),
         (
             "baseline",
-            "scikitLearn",
+            "ScikitLearn",
             ["outputs/baseline/baseline_model.pkl"],
         ),
     ]
@@ -224,7 +224,7 @@ def main():
         version_number = deploy_instance(
             username, model_slug, instance_slug, framework, model_build
         )
-        instance_path = f"{username}/{model_slug}/{framework.lower()}/{instance_slug}"
+        instance_path = f"{username}/{model_slug}/{framework}/{instance_slug}"
         model_sources.append(f"{instance_path}/{version_number}")
 
     # Load and adapt kernel-metadata.json
