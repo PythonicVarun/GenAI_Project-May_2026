@@ -8,7 +8,7 @@ The system targets the **Smart MCQ Solver Challenge** on Kaggle, predicting the 
 
 ## Architecture Overview 🏗️
 
-The project integrates two major modeling approaches to achieve high-performance MCQ solving:
+The project integrates three modeling approaches to achieve high-performance MCQ solving:
 
 ### 1. Custom Local Model (Model 1)
 Built from scratch in PyTorch under the [src/local/](src/local/) directory.
@@ -21,6 +21,11 @@ Built from scratch in PyTorch under the [src/local/](src/local/) directory.
 Developed inside [notebooks/finetune/gemma4-finetune.ipynb](notebooks/finetune/gemma4-finetune.ipynb).
 - **Fine-Tuning:** Uses LoRA (Low-Rank Adaptation) parameter-efficient tuning via Unsloth to adapt Gemma-2 9B on the multiple-choice datasets.
 - **Accelerated Inference:** Integrates fast model quantization and prompt templates to format MCQs with supporting retriever texts.
+
+### 3. Classical Baseline Model (Model 3)
+Built with scikit-learn under the [src/baseline/](src/baseline/) directory - a deliberately simple, fully interpretable counterpart to the two deep models. It uses TF-IDF similarity between the question and each option.
+- **Feature Engineering:** [build_features](src/baseline/features.py#L77-L148) turns every `(question, option)` pair into 8 hand-crafted numbers: TF-IDF cosine similarity between the option and the question, word-level Jaccard overlap, option-length statistics, and their within-question normalized variants (centered similarity and within-row rank).
+- **Classifier:** A `StandardScaler` + `LogisticRegression` [pipeline](src/baseline/model.py#L14-L28) answers the binary question *"is this option the correct one?"* for each pair; the five raw scores of a question are then softmaxed into a distribution over A-E, matching the output format of the other models.
 
 ---
 
@@ -48,18 +53,26 @@ Developed inside [notebooks/finetune/gemma4-finetune.ipynb](notebooks/finetune/g
 │   └── finetune/
 │       └── gemma4-finetune.ipynb             # Unsloth/LoRA Gemma fine-tuning code
 └── src/
-    └── local/                                # Local PyTorch scoring model codebase
+    ├── local/                                # Local PyTorch scoring model codebase
+    │   ├── __init__.py                       # Package entry, auto-loads environment variables
+    │   ├── __main__.py                       # Command line argument parser entrypoint
+    │   ├── config.py                         # Training/Inference config parameters
+    │   ├── dataset.py                        # MCQDataset builder and collator
+    │   ├── git_utils.py                      # Git status validator and commit tracker
+    │   ├── inference.py                      # Batch predicting and logic exporter
+    │   ├── model.py                          # BiLSTMScorer & SelfAttention architecture
+    │   ├── retriever.py                      # TFIDFRetriever index generator
+    │   ├── train.py                          # Training loops and WandB tracker
+    │   ├── utils.py                          # Metric helpers (MAP@3) and text cleaning
+    │   └── vocab.py                          # Word vocabulary dictionaries
+    └── baseline/                             # Classical scikit-learn baseline codebase
         ├── __init__.py                       # Package entry, auto-loads environment variables
         ├── __main__.py                       # Command line argument parser entrypoint
-        ├── config.py                         # Training/Inference config parameters
-        ├── dataset.py                        # MCQDataset builder and collator
-        ├── git_utils.py                      # Git status validator and commit tracker
-        ├── inference.py                      # Batch predicting and logic exporter
-        ├── model.py                          # BiLSTMScorer & SelfAttention architecture
-        ├── retriever.py                      # TFIDFRetriever index generator
-        ├── train.py                          # Training loops and WandB tracker
-        ├── utils.py                          # Metric helpers (MAP@3) and text cleaning
-        └── vocab.py                          # Word vocabulary dictionaries
+        ├── config.py                         # Baseline hyperparameters (shares dataset paths with local)
+        ├── features.py                       # Hand-crafted (question, option) feature builder
+        ├── inference.py                      # Prediction, submission and probability exporter
+        ├── model.py                          # Scaler + LogisticRegression pipeline and artifacts
+        └── train.py                          # Fit, evaluate (MAP@3 / accuracy / macro F1) and WandB tracker
 ```
 
 ---
@@ -106,6 +119,15 @@ Dumps prediction probability numpy arrays (used for stacking/ensembling):
 ```bash
 uv run python -m local --mode export_probs
 ```
+
+### Baseline Model (Model 3)
+The scikit-learn baseline exposes the same three modes and writes its artifacts to `outputs/baseline/`:
+```bash
+uv run python -m baseline --mode train
+uv run python -m baseline --mode predict       # writes outputs/baseline/submission_baseline_model.csv
+uv run python -m baseline --mode export_probs  # writes outputs/baseline/baseline_test_probs.npy
+```
+Training runs end to end on CPU in well under a minute, so it is cheap to re-run whenever the features change.
 
 ### Auto-Deploy to Kaggle
 The deployment script packages model parameters (`local_model_best.pt`, `vocab.pkl`, `retriever.pkl`), zips source files, creates or registers model instances on the Kaggle Models API, and pushes the notebook runner via the Kaggle API:
