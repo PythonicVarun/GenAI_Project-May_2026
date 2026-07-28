@@ -19,9 +19,9 @@ def run_cmd(cmd, check=True):
     return res
 
 
-def get_latest_version(username, model_slug, instance_slug):
+def get_latest_version(username, model_slug, instance_slug, framework):
     """Fetch the latest version number for a model variation."""
-    model_instance = f"{username}/{model_slug}/pytorch/{instance_slug}"
+    model_instance = f"{username}/{model_slug}/{framework.lower()}/{instance_slug}"
     print(f"Fetching version list for {model_instance}...")
     res = run_cmd(
         f"kaggle models instances versions list -v {model_instance}", check=True
@@ -46,68 +46,7 @@ def get_latest_version(username, model_slug, instance_slug):
     return 1
 
 
-def main():
-    """
-    Main function to deploy model to Kaggle.
-    """
-    project_root = Path(__file__).resolve().parent.parent
-
-    api_token = os.environ.get("KAGGLE_API_TOKEN")
-    if not api_token:
-        raise ValueError(
-            "Kaggle API Token (KAGGLE_API_TOKEN) not found in environment."
-        )
-
-    # 2. Extract Kaggle Username from kernel-metadata.json
-    username = None
-    orig_metadata_file = project_root / "notebooks" / "kernel-metadata.json"
-    if orig_metadata_file.exists():
-        try:
-            with open(orig_metadata_file, "r") as f:
-                meta = json.load(f)
-                meta_id = meta.get("id", "")
-                if "/" in meta_id:
-                    username = meta_id.split("/")[0]
-        except Exception as e:
-            raise ValueError(f"Failed to parse notebooks/kernel-metadata.json: {e}")
-
-    print(f"Kaggle Username: {username}")
-
-    # Paths
-    build_dir = project_root / "kaggle_build"
-    shutil.rmtree(build_dir, ignore_errors=True)
-
-    model_build = build_dir / "model"
-    kernel_build = build_dir / "kernel"
-
-    model_build.mkdir(parents=True, exist_ok=True)
-    kernel_build.mkdir(parents=True, exist_ok=True)
-
-    # Package Model Weights and Source Code
-    print("Copying weights and source code to model build folder...")
-    files_to_copy = [
-        "outputs/local/local_model_best.pt",
-        "outputs/local/vocab.pkl",
-        "outputs/local/retriever.pkl",
-    ]
-
-    for f_rel in files_to_copy:
-        src_file = project_root / f_rel
-        if not src_file.exists():
-            raise FileNotFoundError(f"Required model artifact not found: {src_file}")
-
-        shutil.copy(src_file, model_build / src_file.name)
-
-    src_dir = project_root / "src"
-    if src_dir.exists():
-        print("Zipping source code to src.zip...")
-        shutil.make_archive(str(model_build / "src"), "zip", src_dir)
-
-    # Kaggle Model Creation and Versioning
-    model_slug = "smart-mcq-solver"
-    instance_slug = "local"
-
-    # Check if the model container exists
+def ensure_model_container(username, model_slug, model_build):
     print(f"Checking if model {username}/{model_slug} exists on Kaggle...")
     check_model = run_cmd(f"kaggle models get {username}/{model_slug}", check=False)
 
@@ -130,30 +69,53 @@ def main():
     else:
         print(f"Model container {username}/{model_slug} exists.")
 
+
+def package_artifacts(project_root, model_build, files_to_copy):
+    print(f"Copying weights and source code to {model_build}...")
+    shutil.rmtree(model_build, ignore_errors=True)
+    model_build.mkdir(parents=True, exist_ok=True)
+
+    for f_rel in files_to_copy:
+        src_file = project_root / f_rel
+        if not src_file.exists():
+            raise FileNotFoundError(f"Required model artifact not found: {src_file}")
+
+        shutil.copy(src_file, model_build / src_file.name)
+
+    src_dir = project_root / "src"
+    if src_dir.exists():
+        print("Zipping source code to src.zip...")
+        shutil.make_archive(str(model_build / "src"), "zip", src_dir)
+
+
+def deploy_instance(username, model_slug, instance_slug, framework, model_build):
+    print(f"\n=== Deploying variation '{instance_slug}' ({framework}) ===")
+
     # Write model-instance-metadata.json for the variation
     model_instance_metadata = {
         "ownerSlug": username,
         "modelSlug": model_slug,
         "instanceSlug": instance_slug,
-        "framework": "pytorch",
+        "framework": framework,
         "licenseName": "MIT",
     }
     with open(model_build / "model-instance-metadata.json", "w") as f:
         json.dump(model_instance_metadata, f, indent=2)
 
     try:
-        old_version = get_latest_version(username, model_slug, instance_slug)
+        old_version = get_latest_version(username, model_slug, instance_slug, framework)
     except Exception:
         old_version = 0
 
     print(f"Current version before deployment: {old_version}")
 
     # Check if the variation exists
+    instance_path = f"{username}/{model_slug}/{framework.lower()}/{instance_slug}"
     print(
         f"Checking if variation {instance_slug} exists under {username}/{model_slug}..."
     )
     check_instance = run_cmd(
-        f"kaggle models instances get {username}/{model_slug}/pytorch/{instance_slug}",
+        f"kaggle models instances get {instance_path}",
         check=False,
     )
 
@@ -164,8 +126,7 @@ def main():
     else:
         print(f"Variation {instance_slug} exists. Creating a new version...")
         run_cmd(
-            f"kaggle models instances versions create -p {model_build} "
-            f"{username}/{model_slug}/pytorch/{instance_slug}"
+            f"kaggle models instances versions create -p {model_build} {instance_path}"
         )
         target_version = old_version + 1
 
@@ -176,7 +137,9 @@ def main():
     start_register_time = time.time()
     while time.time() - start_register_time < 5 * 60:  # Wait up to 5 mins
         try:
-            current_version = get_latest_version(username, model_slug, instance_slug)
+            current_version = get_latest_version(
+                username, model_slug, instance_slug, framework
+            )
             if current_version >= target_version:
                 registered_version = current_version
                 print(f"Version {target_version} has been registered in the Kaggle.")
@@ -193,8 +156,76 @@ def main():
         )
         registered_version = target_version
 
-    version_number = registered_version
-    print(f"Latest model version determined: {version_number}")
+    print(f"Latest '{instance_slug}' version determined: {registered_version}")
+    return registered_version
+
+
+def main():
+    """
+    Main function to deploy model to Kaggle.
+    """
+    project_root = Path(__file__).resolve().parent.parent
+
+    api_token = os.environ.get("KAGGLE_API_TOKEN")
+    if not api_token:
+        raise ValueError(
+            "Kaggle API Token (KAGGLE_API_TOKEN) not found in environment."
+        )
+
+    # extract username from kernel-metadata.json
+    username = None
+    orig_metadata_file = project_root / "notebooks" / "kernel-metadata.json"
+    if orig_metadata_file.exists():
+        try:
+            with open(orig_metadata_file, "r") as f:
+                meta = json.load(f)
+                meta_id = meta.get("id", "")
+                if "/" in meta_id:
+                    username = meta_id.split("/")[0]
+        except Exception as e:
+            raise ValueError(f"Failed to parse notebooks/kernel-metadata.json: {e}")
+
+    print(f"Kaggle Username: {username}")
+
+    # Paths
+    build_dir = project_root / "kaggle_build"
+    shutil.rmtree(build_dir, ignore_errors=True)
+
+    kernel_build = build_dir / "kernel"
+    kernel_build.mkdir(parents=True, exist_ok=True)
+
+    model_slug = "smart-mcq-solver"
+
+    variations = [
+        (
+            "local",
+            "pytorch",
+            [
+                "outputs/local/local_model_best.pt",
+                "outputs/local/vocab.pkl",
+                "outputs/local/retriever.pkl",
+            ],
+        ),
+        (
+            "baseline",
+            "scikitLearn",
+            ["outputs/baseline/baseline_model.pkl"],
+        ),
+    ]
+
+    first_build = build_dir / "model" / variations[0][0]
+    first_build.mkdir(parents=True, exist_ok=True)
+    ensure_model_container(username, model_slug, first_build)
+
+    model_sources = []
+    for instance_slug, framework, files in variations:
+        model_build = build_dir / "model" / instance_slug
+        package_artifacts(project_root, model_build, files)
+        version_number = deploy_instance(
+            username, model_slug, instance_slug, framework, model_build
+        )
+        instance_path = f"{username}/{model_slug}/{framework.lower()}/{instance_slug}"
+        model_sources.append(f"{instance_path}/{version_number}")
 
     # Load and adapt kernel-metadata.json
     orig_metadata_file = project_root / "notebooks" / "kernel-metadata.json"
@@ -222,13 +253,14 @@ def main():
         kernel_metadata["id"] = f"{username}/{orig_id}"
 
     # Add model source: pythonicvarun/smart-mcq-solver/pytorch/local/1
-    model_source = f"{username}/{model_slug}/pytorch/{instance_slug}/{version_number}"
-    if "model_sources" not in kernel_metadata:
-        kernel_metadata["model_sources"] = []
-
-    # Make sure model_source is listed
-    if model_source not in kernel_metadata["model_sources"]:
-        kernel_metadata["model_sources"].append(model_source)
+    deployed_prefixes = tuple(
+        source.rsplit("/", 1)[0].lower() + "/" for source in model_sources
+    )
+    kernel_metadata["model_sources"] = [
+        source
+        for source in kernel_metadata.get("model_sources", [])
+        if not source.lower().startswith(deployed_prefixes)
+    ] + model_sources
 
     with open(kernel_build / "kernel-metadata.json", "w") as f:
         json.dump(kernel_metadata, f, indent=2)
