@@ -81,7 +81,6 @@ def train() -> BaselineArtifacts:
     wandb.init(
         entity=config.WANDB_ENTITY,
         project=config.WANDB_PROJECT,
-        name="model3-tfidf-logreg",
         tags=["model3", "tfidf", "logistic-regression"],
         config=wandb_config,
         notes=f"Git commit: {commit_url}" if commit_url else "No git info available",
