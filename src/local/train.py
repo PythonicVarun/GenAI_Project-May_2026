@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import wandb
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -54,6 +55,7 @@ def evaluate(model, loader, device):
     model.eval()
     total_loss = 0.0
     all_preds, all_labels = [], []
+    top1, true_idx = [], []
     pbar = tqdm(loader, desc="Evaluating", leave=False)
     for tri, lng, lbl in pbar:
         tri, lng, lbl = tri.to(device), lng.to(device), lbl.to(device)
@@ -65,10 +67,19 @@ def evaluate(model, loader, device):
             ranked = [IDX2LABEL[i] for i in p_row.argsort()[::-1]]
             all_preds.append(ranked[:3])
             all_labels.append(IDX2LABEL[l])
+            top1.append(int(p_row.argmax()))
+            true_idx.append(l)
 
         pbar.set_postfix(loss=loss.item())
 
-    return total_loss / len(loader), map_at_3(all_preds, all_labels)
+    accuracy = float(np.mean(np.array(top1) == np.array(true_idx)))
+    macro_f1 = float(f1_score(true_idx, top1, average="macro"))
+    return (
+        total_loss / len(loader),
+        map_at_3(all_preds, all_labels),
+        accuracy,
+        macro_f1,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -205,17 +216,20 @@ def train():
             tr_loss = run_epoch(
                 model, train_loader, opt, sched, device, config.GRAD_CLIP
             )
-            va_loss, va_map3 = evaluate(model, val_loader, device)
+            va_loss, va_map3, va_acc, va_f1 = evaluate(model, val_loader, device)
 
             is_best = va_map3 > best_map3
             star = " (Best :)" if is_best else ""
             logger.info(
-                "Epoch %d/%d completed | Train Loss: %.4f | Val Loss: %.4f | Val MAP@3: %.4f%s",  # noqa: E501
+                "Epoch %d/%d completed | Train Loss: %.4f | Val Loss: %.4f | "
+                "Val MAP@3: %.4f | Val Accuracy: %.4f | Val Macro-F1: %.4f%s",
                 ep,
                 config.EPOCHS,
                 tr_loss,
                 va_loss,
                 va_map3,
+                va_acc,
+                va_f1,
                 star,
             )
 
@@ -226,6 +240,8 @@ def train():
                     "train_loss": tr_loss,
                     "val_loss": va_loss,
                     "val_map3": va_map3,
+                    "val_accuracy": va_acc,
+                    "val_macro_f1": va_f1,
                     "lr": opt.param_groups[0]["lr"],
                 }
             )
@@ -242,6 +258,8 @@ def train():
                 )
                 if wandb.run is not None:
                     wandb.run.summary["best_val_map3"] = best_map3
+                    wandb.run.summary["best_val_accuracy"] = va_acc
+                    wandb.run.summary["best_val_macro_f1"] = va_f1
                 else:
                     logger.warning(
                         "WandB run not initialized. Best Val MAP@3 will not be logged"
