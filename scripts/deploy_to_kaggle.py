@@ -6,6 +6,8 @@ import subprocess
 import time
 from pathlib import Path
 
+REGISTRATION_TIMEOUT = 5 * 60
+
 
 def run_cmd(cmd, check=True):
     """Utility function to run a shell command."""
@@ -24,26 +26,26 @@ def get_latest_version(username, model_slug, instance_slug, framework):
     model_instance = f"{username}/{model_slug}/{framework}/{instance_slug}"
     print(f"Fetching version list for {model_instance}...")
     res = run_cmd(
-        f"kaggle models instances versions list -v {model_instance}", check=True
+        f"kaggle models instances versions list -v --page-size 200 {model_instance}",
+        check=True,
     )
-    lines = res.stdout.strip().split("\n")
-    if len(lines) <= 1:
-        return 1
 
-    reader = csv.reader(lines)
-    next(reader)
-    versions = []
-    for row in reader:
-        if row:
-            try:
-                versions.append(int(row[0]))
-            except ValueError:
-                pass
+    # Drop "Next Page Token = ..." banner
+    lines = [
+        line
+        for line in res.stdout.strip().splitlines()
+        if line.strip() and not line.lower().startswith("next page token")
+    ]
+    if not lines or not lines[0].startswith("version"):
+        return 0
 
-    if versions:
-        return max(versions)
+    versions = [
+        int(row["version"])
+        for row in csv.DictReader(lines)
+        if row.get("variation") == instance_slug and str(row["version"]).isdigit()
+    ]
 
-    return 1
+    return max(versions, default=0)
 
 
 def ensure_model_container(username, model_slug, model_build):
@@ -104,7 +106,8 @@ def deploy_instance(username, model_slug, instance_slug, framework, model_build)
 
     try:
         old_version = get_latest_version(username, model_slug, instance_slug, framework)
-    except Exception:
+    except Exception as e:
+        print(f"Could not read current version ({e}). Assuming none exists.")
         old_version = 0
 
     print(f"Current version before deployment: {old_version}")
@@ -134,14 +137,15 @@ def deploy_instance(username, model_slug, instance_slug, framework, model_build)
     print(f"Waiting for Kaggle to register version {target_version} in the registry...")
 
     registered_version = 0
+    latest_seen = old_version
     start_register_time = time.time()
-    while time.time() - start_register_time < 5 * 60:  # Wait up to 5 mins
+    while time.time() - start_register_time < REGISTRATION_TIMEOUT:
         try:
-            current_version = get_latest_version(
+            latest_seen = get_latest_version(
                 username, model_slug, instance_slug, framework
             )
-            if current_version >= target_version:
-                registered_version = current_version
+            if latest_seen >= target_version:
+                registered_version = latest_seen
                 print(f"Version {target_version} has been registered in the Kaggle.")
                 break
         except Exception:
@@ -150,11 +154,10 @@ def deploy_instance(username, model_slug, instance_slug, framework, model_build)
         time.sleep(5)
 
     if not registered_version:
-        print(
-            f"Warning: Version {target_version} did not appear in version list."
-            "Forcing target_version."
+        raise RuntimeError(
+            f"Version {target_version} of {instance_path} did not register within "
+            f"{REGISTRATION_TIMEOUT}s (latest version seen: {latest_seen})."
         )
-        registered_version = target_version
 
     print(f"Latest '{instance_slug}' version determined: {registered_version}")
     return registered_version
