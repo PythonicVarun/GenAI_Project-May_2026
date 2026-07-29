@@ -230,6 +230,24 @@ def main():
         instance_path = f"{username}/{model_slug}/{framework}/{instance_slug}"
         model_sources.append(f"{instance_path}/{version_number}")
 
+    # Publishing from notebook output "pythonicvarun/gemma4-finetune"
+    for instance_slug, framework in [("gemma4-lora-finetune", "Transformers")]:
+        try:
+            version_number = get_latest_version(
+                username, model_slug, instance_slug, framework
+            )
+        except Exception as e:
+            version_number = 0
+            print(f"Could not read latest version of '{instance_slug}' ({e}).")
+
+        if not version_number:
+            print(f"Keeping the '{instance_slug}' version already pinned.")
+            continue
+
+        instance_path = f"{username}/{model_slug}/{framework}/{instance_slug}"
+        print(f"Latest '{instance_slug}' version determined: {version_number}")
+        model_sources.append(f"{instance_path}/{version_number}")
+
     # Load and adapt kernel-metadata.json
     orig_metadata_file = project_root / "notebooks" / "kernel-metadata.json"
     if not orig_metadata_file.exists():
