@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -43,7 +44,7 @@ def solve(model_name: str, question: str, *options: str):
             f"**Unavailable.** {prediction.note}",
             pd.DataFrame(),
             unavailable,
-            unavailable
+            unavailable,
         )
 
     table = pd.DataFrame(
@@ -141,7 +142,11 @@ def build_ui() -> gr.Blocks:
 
 
 def start():
-    build_ui().launch(theme=gr.themes.Soft())
+    build_ui().launch(
+        theme=gr.themes.Soft(),
+        server_name=os.getenv("HOST", "0.0.0.0"),
+        server_port=int(os.getenv("PORT", "7860")),
+    )
 
 
 if __name__ == "__main__":
