@@ -143,7 +143,7 @@ def build_ui() -> gr.Blocks:
 
 def start():
     build_ui().launch(
-        theme=gr.themes.Soft(),
+        theme=gr.themes.Citrus(),
         server_name=os.getenv("HOST", "0.0.0.0"),
         server_port=int(os.getenv("PORT", "7860")),
     )

@@ -120,8 +120,7 @@ def run_bilstm(question: str, options: list[str]) -> Prediction:
 def gemma_status():
     return (
         "Gemma-4 needs a CUDA GPU. This deployment is running on CPU, so only the "
-        "BiLSTM and the logistic-regression baseline are available. "
-        "Switch the Space to GPU hardware to enable it."
+        "BiLSTM and the logistic-regression baseline are available."
     )
 
 
