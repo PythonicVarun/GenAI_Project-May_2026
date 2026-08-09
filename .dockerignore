@@ -4,7 +4,7 @@
 .ruff_cache/
 __pycache__/
 **/__pycache__/
-*.pyc
+*.py[oc]
 
 notebooks/
 scripts/
@@ -21,3 +21,6 @@ CHANGELOG.md
 Project_Guideline.md
 
 outputs/**/*_probs.npy
+
+*.nogit*
+.github/
