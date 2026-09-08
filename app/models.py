@@ -21,7 +21,7 @@ from local.config import (  # noqa: E402
 BILSTM = "BiLSTM scorer (from scratch)"
 BASELINE = "TF-IDF + Logistic Regression"
 GEMMA = "Gemma-4 E4B + LoRA"
-ALL_MODELS = [BILSTM, BASELINE, GEMMA]
+ALL_MODELS = [BILSTM, BASELINE]
 
 
 @dataclass
@@ -144,7 +144,7 @@ def run_baseline(question: str, options: list[str]) -> Prediction:
     return Prediction(probs[0], "")
 
 
-RUNNERS = {BILSTM: run_bilstm, BASELINE: run_baseline, GEMMA: run_gemma}
+RUNNERS = {BILSTM: run_bilstm, BASELINE: run_baseline}
 
 
 def run(name: str, question: str, options: list[str]) -> Prediction:

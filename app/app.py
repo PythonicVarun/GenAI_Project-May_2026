@@ -68,7 +68,7 @@ def solve(model_name: str, question: str, *options: str):
 
 def build_ui() -> gr.Blocks:
     examples = load_examples()
-    unavailable = gemma_status()
+    # unavailable = gemma_status()
 
     with gr.Blocks(title="Smart MCQ Solver") as demo:
         gr.Markdown(
@@ -80,8 +80,8 @@ def build_ui() -> gr.Blocks:
             "*Varun Agnihotri (24f2004142) - "
             "[GitHub](https://github.com/PythonicVarun/GenAI_Project-May_2026)*"
         )
-        if unavailable:
-            gr.Markdown(f"> **Note on {GEMMA}:** {unavailable}")
+        # if unavailable:
+        #     gr.Markdown(f"> **Note on {GEMMA}:** {unavailable}")
 
         with gr.Row():
             with gr.Column(scale=3):
@@ -125,11 +125,11 @@ def build_ui() -> gr.Blocks:
             inputs=[model_name, question, *options],
             outputs=[answer, table, context, model_context],
         )
-        model_name.change(
-            lambda name: gr.update(visible=name != GEMMA),
-            inputs=model_name,
-            outputs=table,
-        )
+        # model_name.change(
+        #     lambda name: gr.update(visible=name != GEMMA),
+        #     inputs=model_name,
+        #     outputs=table,
+        # )
 
         if examples:
             gr.Examples(
